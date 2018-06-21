@@ -193,8 +193,6 @@ function transformData(data, config, done) {
   STYLE_STRING = "";
   JSON_DATA = {};
 
-  const jsonPath = `${config.outputPath}/${config.jsonFile}`;
-
   data.baseSize = config.baseSize;
   data.svg = data.svg.map(function(item) {
 
@@ -240,6 +238,7 @@ function transformData(data, config, done) {
   data.relHeight = data.sheight / config.baseSize;
 
   if (config.jsonData) {
+    const jsonPath = `${config.outputPath}/${config.jsonFile}`;
     const json = JSON.stringify(JSON_DATA);
     fs.writeFileSync(jsonPath, json, "utf8");
   }
@@ -292,8 +291,10 @@ function writeFiles(stream, config, svg, data, cb) {
       data.svgInline = output;
       if (config.preview) {
           promises.push(makeFile(previewTemplate, config.previewFile, stream, data));
+          Q.all(promises).then(cb);
+      } else {
+        cb(null);
       }
-      Q.all(promises).then(cb);
   });
 }
 
