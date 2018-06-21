@@ -8,6 +8,7 @@ describe("Sending Files", function () {
 
         var config = {
             symbols: true,
+            pngFallback: true,
             outputPath: "./test/output",
             svgOutputFile: "symbols.svg"
         };

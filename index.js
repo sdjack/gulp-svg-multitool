@@ -7,11 +7,12 @@ const SpriteData = require("svg-sprite-data");
 const through2 = require("through2");
 const gutil = require("gulp-util");
 const File = gutil.File;
-const fs = require("fs");
 const Q = require("q");
 const _ = require("lodash");
 const path = require("path");
-const svg2img = require("svg2img");
+const fs = require("fs");
+const gm = require("gm");
+const im = gm.subClass({ imageMagick: true });
 const PLUGIN_NAME = "gulp-svg-multitool";
 /**
  * Stored RegExp patterns used for parsing svg file data
@@ -78,6 +79,7 @@ let JSON_DATA = {};
 const options = {
     symbols: false,
     jsonData: true,
+    preview: true,
     pngFallback: false,
     asyncTransforms: false,
     outputPath:   "./",
@@ -226,8 +228,13 @@ function transformData(data, config, done) {
 
       if (config.pngFallback) {
         const pngPath = `${config.outputPath}/${item.name}.png`;
-        svg2img(item.data, function(error, buffer) {
-          fs.writeFileSync(pngPath, buffer);
+        const svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${item.data}</xml>`;
+        const buffer = new Buffer(svgContent);
+        gm(buffer, `${item.name}.svg`).write(pngPath, function (err) {
+          if (err) {
+            return handle(err);
+          }
+          console.log(`Created ${pngPath}`);
         });
       }
 
@@ -291,7 +298,9 @@ function writeFiles(stream, config, svg, data, cb) {
   }
   makeFile(template, config.svgOutputFile, stream, data).then(function(output) {
       data.svgInline = output;
-      promises.push(makeFile(previewTemplate, config.previewFile, stream, data));
+      if (config.preview) {
+          promises.push(makeFile(previewTemplate, config.previewFile, stream, data));
+      }
       Q.all(promises).then(cb);
   });
 }

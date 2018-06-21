@@ -53,11 +53,11 @@
     "vinyl-fs": "2.4.3"
   },
   "dependencies": {
+    "gm": "^1.23.1",
     "gulp-util": "3.0.7",
     "lodash": "^4.17.10",
     "q": "1.4.1",
     "svg-sprite-data": "3.1.0",
-    "svg2img": "^0.3.0",
     "svgo": "0.6.6",
     "through2": "2.0.1",
     "vinyl": "1.2.0"
