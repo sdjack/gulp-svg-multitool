@@ -53,7 +53,6 @@
     "vinyl-fs": "2.4.3"
   },
   "dependencies": {
-    "gm": "^1.23.1",
     "gulp-util": "3.0.7",
     "lodash": "^4.17.10",
     "q": "1.4.1",
