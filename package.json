@@ -9,7 +9,7 @@
   "scripts": {
     "test": "gulp lint && mocha --recursive test/specs",
     "demo": "node demo.js",
-    "docs": "node generateDocs.js",
+    "docs": "jsdoc index.js",
     "gulp": "gulp",
     "gulp-defs": "gulp multitool:defs",
     "gulp-symbols": "gulp multitool:symbols",
@@ -34,6 +34,7 @@
   "homepage": "https://github.com/sdjack/gulp-svg-multitool#readme",
   "devDependencies": {
     "chai": "3.5.0",
+    "growl": "^1.10.0",
     "gulp": "^3.9.1",
     "gulp-clean": "0.3.2",
     "gulp-contribs": "0.0.3",
@@ -42,10 +43,12 @@
     "gulp-jshint": "^2.1.0",
     "gulp-svg2png-fix": "^2.1.0",
     "gulp-yuidoc": "0.1.2",
+    "hoek": "^4.2.1",
     "img-compare": "1.2.0",
     "jshint": "^2.9.1",
     "marked": "^0.4.0",
     "mocha": "3.0.1",
+    "send": "^0.11.1",
     "sinon": "1.17.5",
     "vinyl-fs": "2.4.3"
   },
