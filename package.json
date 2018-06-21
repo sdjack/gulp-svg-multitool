@@ -1,6 +1,6 @@
 {
   "name": "gulp-svg-multitool",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Various SVG manipulations using gulp",
   "main": "index.js",
   "engines": {
