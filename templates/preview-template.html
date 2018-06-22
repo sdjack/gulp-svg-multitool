@@ -8,7 +8,6 @@
     <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT"/>
     <meta http-equiv="pragma" content="no-cache"/>
     <title>SVG Sprites Preview</title>
-    <link href="<%= config.cssFile %>" rel="stylesheet" type="text/css" media="all"/>
     <style type="text/css">
       @CHARSET "UTF-8";
       * {
@@ -203,11 +202,11 @@
         <% _.forEach(svg, function(svgItem) {  %>
         <li title="<%= svgItem.name %>" class="icon-item" id="icon-item-<%= svgItem.name %>">
             <div class="icon-original">
-                <img src="../assets/svg/<%= svgItem.name %>.svg" />
+                <img src="../svg/<%= svgItem.name %>.svg" />
             </div>
             <div class="icon-result">
               <div class="icon-box" id="icon-box-<%= svgItem.name %>">
-                  <svg class="<%= common %> <%= svgItem.name %>" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                  <svg class="<%= config.common %> <%= svgItem.name %>" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                       <use xlink:href="#<%= svgItem.name %>" />
                   </svg>
               </div>
@@ -220,7 +219,7 @@
             <div class="snippet-popover" id="snippet-<%= svgItem.name %>">
                 <pre>
                   <code>
-                    &lt;svg class=&quot;<%= common %> <%= svgItem.name %>&quot;&gt;
+                    &lt;svg class=&quot;<%= config.common %> <%= svgItem.name %>&quot;&gt;
                     <br/>
                     &nbsp;&nbsp;&lt;use xlink:href=&quot;#<%= svgItem.name %>&quot;&gt;&lt;/use&gt;
                     <br/>

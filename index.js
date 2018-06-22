@@ -3,13 +3,14 @@
  * https://github.com/shakyshane/gulp-svg-sprites#readme
  * @namespace (internal) gulp-svg-multitool
  */
-const SpriteData = require("svg-sprite-data");
-const through2 = require("through2");
+const through = require("through2");
 const gutil = require("gulp-util");
 const File = gutil.File;
 const Q = require("q");
 const _ = require("lodash");
 const path = require("path");
+const async = require("async");
+const svg2png = require("svg2png");
 const fs = require("fs");
 const PLUGIN_NAME = "gulp-svg-multitool";
 /**
@@ -55,8 +56,7 @@ const PATTERNS = {
 const FindChildren = new RegExp(PATTERNS.innerMarkup, "g");
 
 let STYLE_STRING = "";
-let JSON_STRING = "";
-let JSON_DATA = {};
+const SVG_STORE = {svg:[]};
 /**
  * Default configuration. Everything here can be overridden
  * @constant {Object} options
@@ -79,7 +79,8 @@ const options = {
     jsonData: true,
     preview: true,
     pngFallback: false,
-    asyncTransforms: true,
+    asyncTransforms: false,
+    common: "icon",
     outputPath:   "./",
     previewFile: "preview.html",
     jsonFile: "svg-data.json",
@@ -109,15 +110,15 @@ function camelCase(input) {
 /**
  * Use regex to find a childs contents and nested elements
  * @function jsonify
- * @param data
+ * @param {String} input
  * @return {Array}
  * @memberof (internal) gulp-svg-multitool
  */
-function jsonify(data) {
+function jsonify(input) {
   const jsonData = [];
   const FindChildren = new RegExp(PATTERNS.findChildren, "gim");
   let childArray;
-  while ((childArray = FindChildren.exec(data)) !== null) {
+  while ((childArray = FindChildren.exec(input)) !== null) {
     const tag = childArray[1];
     const props = {};
     const innerHTML = childArray[3];
@@ -144,15 +145,15 @@ function jsonify(data) {
 /**
  * Parse for embedded style blocks within svgs
  * @function extractStyles
- * @param data
- * @param name
- * @param styleBlock
+ * @param {String} input
+ * @param {String} name
+ * @param {String} styleBlock
  * @return {String}
  * @memberof (internal) gulp-svg-multitool
  */
-function extractStyles(data, name, styleBlock) {
+function extractStyles(input, name, styleBlock) {
 
-  let output = data.replace(PATTERNS.styleBlock, "");
+  let output = input.replace(PATTERNS.styleBlock, "");
   let newStyleBlock = styleBlock;
 
   const baseClass = name.replace(/[^\w\d\-]/g, "");
@@ -188,44 +189,20 @@ function extractStyles(data, name, styleBlock) {
  * @return {Object}
  * @memberof (internal) gulp-svg-multitool
  */
-function transformData(data, config, done) {
+function transformData(stream, data, config, done) {
 
   STYLE_STRING = "";
-  JSON_DATA = {};
+  const jsonBuildData = {};
 
-  data.baseSize = config.baseSize;
   data.svg = data.svg.map(function(item) {
-
-      item.relHeight = item.height / config.baseSize;
-      item.relWidth  = item.width / config.baseSize;
-
-      item.relPositionX = item.positionX / config.baseSize - config.padding / config.baseSize;
-      item.relPositionY = item.positionY / config.baseSize - config.padding / config.baseSize;
-      item.normal = true;
-
-      if (item.viewBox && item.viewBox.match(PATTERNS.nan)) {
-        item.viewBox = item.viewBox.replace(PATTERNS.nan, "-");
-      }
-
+      item.viewBox = "0 0 0 0";
       const styleMatches = item.data.match(PATTERNS.styleBlockInner);
       if (styleMatches) {
         item.data = extractStyles(item.data, item.name, styleMatches[0]);
       }
       if (config.jsonData) {
         const jsonData = jsonify(item.data);
-        JSON_DATA[item.name] = jsonData[0];
-      }
-
-      if (item.name.match(/~/g)) {
-        return false;
-      } else {
-        item.name = item.selector[0].expression;
-      }
-
-      if (config.pngFallback) {
-        const pngPath = `${config.outputPath}/${item.name}.png`;
-        const buffer = new Buffer(item.data);
-        fs.writeFileSync(pngPath, buffer);
+        jsonBuildData[item.name] = jsonData[0];
       }
 
       return item;
@@ -234,13 +211,10 @@ function transformData(data, config, done) {
   data.svgStyle = STYLE_STRING;
   data.svg = data.svg.filter(function(item) { return item; });
 
-  data.relWidth  = data.swidth / config.baseSize;
-  data.relHeight = data.sheight / config.baseSize;
-
   if (config.jsonData) {
     const jsonPath = `${config.outputPath}/${config.jsonFile}`;
-    const json = JSON.stringify(JSON_DATA);
-    fs.writeFileSync(jsonPath, json, "utf8");
+    const json = JSON.stringify(jsonBuildData);
+    makeFile(config.jsonFile, stream, json);
   }
 
   if (config.asyncTransforms) {
@@ -252,8 +226,8 @@ function transformData(data, config, done) {
 /**
  * Helper for correct plugin errors
  * @function error
- * @param context
- * @param msg
+ * @param {Object} context
+ * @param {String} msg
  * @memberof (internal) gulp-svg-multitool
  */
 function error(context, msg) {
@@ -261,15 +235,69 @@ function error(context, msg) {
 }
 
 /**
- * @function writeFiles
- * @param stream
- * @param config
- * @param svg
- * @param data
- * @param cb
+ * @function makeFile
+ * @param {String} fileName
+ * @param {Stream} stream
+ * @param {*} data
  * @memberof (internal) gulp-svg-multitool
  */
-function writeFiles(stream, config, svg, data, cb) {
+function makeFile(fileName, stream, data) {
+  const fileBuffer = new Buffer(data);
+  const newFile = new File({
+      cwd:  "./",
+      base: "./",
+      path: fileName,
+      contents: fileBuffer
+  });
+  stream.push(newFile);
+}
+
+/**
+ * @function makeTemplateFile
+ * @param {File} template
+ * @param {String} fileName
+ * @param {Stream} stream
+ * @param {Object} data
+ * @return {Promise.promise|*}
+ * @memberof (internal) gulp-svg-multitool
+ */
+function makeTemplateFile(template, fileName, stream, data) {
+
+  var deferred = Q.defer();
+  var id = _.uniqueId();
+  var out = "";
+
+  try {
+    var compiled = _.template(template);
+    out = compiled(data);
+  }catch (e) {
+    deferred.reject(e);
+    return deferred.promise;
+  }
+
+  const fileBuffer = new Buffer(out);
+  const newFile = new File({
+      cwd:  "./",
+      base: "./",
+      path: fileName,
+      contents: fileBuffer
+  });
+
+  stream.push(newFile);
+  deferred.resolve(out);
+
+  return deferred.promise;
+}
+
+/**
+ * @function writeFiles
+ * @param {Stream} stream
+ * @param {Object} config
+ * @param {Object} data
+ * @param {Function} cb
+ * @memberof (internal) gulp-svg-multitool
+ */
+function writeFiles(stream, config, data, cb) {
 
   data.config = config;
 
@@ -285,52 +313,17 @@ function writeFiles(stream, config, svg, data, cb) {
       previewTemplate = fs.readFileSync(__dirname + "/templates/preview-symbols.html", "utf-8");
   } else {
       template = fs.readFileSync(__dirname + "/templates/defs.svg", "utf-8");
-      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-defs.html", "utf-8");
+      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-template.html", "utf-8");
   }
-  makeFile(template, config.svgOutputFile, stream, data).then(function(output) {
+  makeTemplateFile(template, config.svgOutputFile, stream, data).then(function(output) {
       data.svgInline = output;
       if (config.preview) {
-          promises.push(makeFile(previewTemplate, config.previewFile, stream, data));
+          promises.push(makeTemplateFile(previewTemplate, config.previewFile, stream, data));
           Q.all(promises).then(cb);
       } else {
         cb(null);
       }
   });
-}
-
-/**
- * @function makeFile
- * @param template
- * @param fileName
- * @param stream
- * @param data
- * @return {Promise.promise|*}
- * @memberof (internal) gulp-svg-multitool
- */
-function makeFile(template, fileName, stream, data) {
-
-  var deferred = Q.defer();
-  var id = _.uniqueId();
-  var out = "";
-
-  try {
-    var compiled = _.template(template);
-    out = compiled(data);
-  }catch (e) {
-    deferred.reject(e);
-    return deferred.promise;
-  }
-
-  stream.push(new File({
-      cwd:  "./",
-      base: "./",
-      path: fileName,
-      contents: new Buffer(out)
-    }));
-
-  deferred.resolve(out);
-
-  return deferred.promise;
 }
 
 /**
@@ -344,34 +337,49 @@ module.exports = function(config) {
 
     config = _.merge(_.cloneDeep(options), config || {});
 
-    var spriter = new SpriteData(config);
+    SVG_STORE.svg = [];
+    SVG_STORE.svgStyle = "";
 
-    return through2.obj(function(file, enc, cb) {
+    return through.obj(function(file, enc, cb) {
 
-        spriter.add(file.path, file.contents.toString());
+      var stream = this;
+      var fileName = path.basename(file.path, path.extname(file.path));
+      var fileContents = file.contents.toString();
+      var newData = {name: fileName, data: fileContents};
+      SVG_STORE.svg.push(newData);
+      if (config.pngFallback) {
+        stream.push(new File({
+            cwd:  "./",
+            base: "./",
+            path: `${fileName}.png`,
+            contents: svg2png.sync(file.contents)
+        }));
+      }
+      // if (file.isBuffer()) {
+      //   error(stream, "Buffers not supported!");
+      // }
 
-        cb(null);
+      cb(null);
 
-      }, function(cb) {
+    }, function(cb) {
 
-        var stream = this;
+      var stream = this;
+      // console.log("Plugin Wrapping Up");
+      // console.log(SVG_STORE);
+      var onDoneAfterTransformData = function(data) {
+        writeFiles(stream, config, data, cb.bind(null, null));
+      };
 
-        spriter.compile(config, function(err, svg) {
-            var onDoneAfterTransformData = function(data) {
-                writeFiles(stream, config, svg.svg, data, cb.bind(null, null));
-              };
+      var onDoneTransformData = function(data) {
+        config.afterTransform(data, config, onDoneAfterTransformData);
+      };
 
-            var onDoneTransformData = function(data) {
-                config.afterTransform(data, config, onDoneAfterTransformData);
-              };
-
-            if (config.asyncTransforms) {
-              config.transformData(svg.data, config, onDoneTransformData);
-            } else {
-              var data = config.transformData(svg.data, config);
-              data = config.afterTransform(data, config);
-              writeFiles(stream, config, svg.svg, data, cb.bind(null, null));
-            }
-        });
-    });
+      if (config.asyncTransforms) {
+        config.transformData(stream, SVG_STORE, config, onDoneTransformData);
+      } else {
+        var data = config.transformData(stream, SVG_STORE, config);
+        data = config.afterTransform(data, config);
+        writeFiles(stream, config, data, cb.bind(null, null));
+      }
+  });
 };

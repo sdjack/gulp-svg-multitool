@@ -21,7 +21,7 @@ var config = {
  * @method gulp-options
  */
 gulp.task("multitool:options", ["clean:output"], function () {
-    gulp.src("test/fixtures/basic/*.svg")
+    gulp.src("test/fixtures/*.svg")
         .pipe(svgMultitool(config))
         .pipe(gulp.dest("./test/output"))
 });

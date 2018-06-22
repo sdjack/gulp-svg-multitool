@@ -20,7 +20,7 @@ var config = {
  * @method gulp-pngs
  */
 gulp.task("multitool:pngs", ["clean:output"], function () {
-    gulp.src("test/fixtures/defs/*.svg")
+    gulp.src("test/fixtures/*.svg")
         .pipe(svgMultitool(config))
         .pipe(gulp.dest("./test/output"))
 });

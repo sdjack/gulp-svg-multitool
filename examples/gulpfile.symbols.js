@@ -26,7 +26,7 @@ var config = {
  * @method gulp-symbols
  */
 gulp.task("multitool:symbols", ["clean:output"], function() {
-    return gulp.src("test/fixtures/basic/*.svg")
+    return gulp.src("test/fixtures/*.svg")
         .pipe(svgMultitool(config))
         .pipe(gulp.dest("./test/output"));
   });
