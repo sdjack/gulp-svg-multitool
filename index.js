@@ -12,6 +12,7 @@ const path = require("path");
 const async = require("async");
 const svg2png = require("svg2png");
 const fs = require("fs");
+const getDispatcher = require("./lib/Dispatcher").getDispatcher;
 const PLUGIN_NAME = "gulp-svg-multitool";
 /**
  * Stored RegExp patterns used for parsing svg file data
@@ -35,6 +36,7 @@ const PLUGIN_NAME = "gulp-svg-multitool";
  * @memberof (internal) gulp-svg-multitool
  */
 const PATTERNS = {
+    comments: /<!--[\s\S]*?-->/g,
     tagInner: /<(\w+)\s?[^>]*>([\w\W]*)<\/\1>/g,
     svgInner: /(?:<svg[^>]*>)([\w\W]*)(?:<\/svg>)/g,
     svgSymbolInner: /(?:<symbol[^>]*>)([\w\W]*)(?:<\/symbol>)/g,
@@ -87,6 +89,7 @@ const options = {
     svgOutputFile: "atlas.svg",
     padding: 0,
     baseSize: 10,
+    svgoConfig: {},
     transformData: transformData,
     afterTransform: function(data, config, done) {
         if (config.asyncTransforms) {
@@ -95,91 +98,6 @@ const options = {
         return data;
     }
 };
-/**
- * Apply camel case to a string
- * @function camelCase
- * @param input
- * @return {String}
- * @memberof (internal) gulp-svg-multitool
- */
-function camelCase(input) {
-  return input.replace(/\W+(.)/g, function(match, chr) {
-      return chr.toUpperCase();
-  });
-}
-/**
- * Use regex to find a childs contents and nested elements
- * @function jsonify
- * @param {String} input
- * @return {Array}
- * @memberof (internal) gulp-svg-multitool
- */
-function jsonify(input) {
-  const jsonData = [];
-  const FindChildren = new RegExp(PATTERNS.findChildren, "gim");
-  let childArray;
-  while ((childArray = FindChildren.exec(input)) !== null) {
-    const tag = childArray[1];
-    const props = {};
-    const innerHTML = childArray[3];
-    let children, context;
-    if (childArray[2]) {
-      const ParseAttributes = new RegExp(PATTERNS.parseAttributes, "g");
-      while ((attrArray = ParseAttributes.exec(childArray[2])) !== null) {
-        const attrib = camelCase(attrArray[1]);
-        props[attrib] = attrArray[2];
-      }
-    }
-    if (childArray[3]) {
-      if (innerHTML.substring(0,1) === "<") {
-        children = jsonify(innerHTML);
-      } else {
-        context = innerHTML;
-      }
-    }
-    jsonData.push({ tag, props, context, children });
-  }
-  return jsonData;
-}
-
-/**
- * Parse for embedded style blocks within svgs
- * @function extractStyles
- * @param {String} input
- * @param {String} name
- * @param {String} styleBlock
- * @return {String}
- * @memberof (internal) gulp-svg-multitool
- */
-function extractStyles(input, name, styleBlock) {
-
-  let output = input.replace(PATTERNS.styleBlock, "");
-  let newStyleBlock = styleBlock;
-
-  const baseClass = name.replace(/[^\w\d\-]/g, "");
-  const defArray = styleBlock.match(PATTERNS.classDef);
-  const classArray = styleBlock.match(PATTERNS.classDefName);
-
-  if (defArray && classArray) {
-    for (let i = 0; i < classArray.length; i += 1) {
-      const srcDef = defArray[i];
-      const orginal = classArray[i];
-      const revised = `${baseClass}_${i}`;
-      const searchable = `class="${orginal}"`;
-      const replacement = `class="${revised}"`;
-      output = output.replace(new RegExp(searchable, "g"), replacement);
-      const newDef = srcDef.replace(orginal, revised);
-      newStyleBlock = newStyleBlock.replace(srcDef, newDef);
-    }
-  }
-
-  STYLE_STRING += newStyleBlock;
-  output = output.replace(PATTERNS.nan, "-");
-  output = output.replace(new RegExp("<defs></defs>", "g"), "");
-
-  return output;
-}
-
 /**
  * Any last-minute data transformations before handing off to templates,
  * can be overridden by supplying a "transformData" option
@@ -196,19 +114,13 @@ function transformData(stream, data, config, done) {
 
   data.svg = data.svg.map(function(item) {
       item.viewBox = "0 0 0 0";
-      const styleMatches = item.data.match(PATTERNS.styleBlockInner);
-      if (styleMatches) {
-        item.data = extractStyles(item.data, item.name, styleMatches[0]);
-      }
       if (config.jsonData) {
-        const jsonData = jsonify(item.data);
-        jsonBuildData[item.name] = jsonData[0];
+        jsonBuildData[item.name] = item.props;
       }
 
       return item;
   });
 
-  data.svgStyle = STYLE_STRING;
   data.svg = data.svg.filter(function(item) { return item; });
 
   if (config.jsonData) {
@@ -337,16 +249,19 @@ module.exports = function(config) {
 
     config = _.merge(_.cloneDeep(options), config || {});
 
-    SVG_STORE.svg = [];
-    SVG_STORE.svgStyle = "";
+    // SVG_STORE.svg = [];
+    // SVG_STORE.svgStyle = "";
+
+    const dispatcher = getDispatcher(config);
 
     return through.obj(function(file, enc, cb) {
 
       var stream = this;
       var fileName = path.basename(file.path, path.extname(file.path));
-      var fileContents = file.contents.toString();
-      var newData = {name: fileName, data: fileContents};
-      SVG_STORE.svg.push(newData);
+      // var fileContents = file.contents.toString();
+      // var newData = {name: fileName, data: fileContents};
+      // SVG_STORE.svg.push(newData);
+      dispatcher.register(file);
       if (config.pngFallback) {
         stream.push(new File({
             cwd:  "./",
@@ -355,9 +270,6 @@ module.exports = function(config) {
             contents: svg2png.sync(file.contents)
         }));
       }
-      // if (file.isBuffer()) {
-      //   error(stream, "Buffers not supported!");
-      // }
 
       cb(null);
 
@@ -366,20 +278,22 @@ module.exports = function(config) {
       var stream = this;
       // console.log("Plugin Wrapping Up");
       // console.log(SVG_STORE);
-      var onDoneAfterTransformData = function(data) {
-        writeFiles(stream, config, data, cb.bind(null, null));
-      };
+      dispatcher.compile(function(err, svgData) {
+        var onDoneAfterTransformData = function(data) {
+          writeFiles(stream, config, data, cb.bind(null, null));
+        };
 
-      var onDoneTransformData = function(data) {
-        config.afterTransform(data, config, onDoneAfterTransformData);
-      };
+        var onDoneTransformData = function(data) {
+          config.afterTransform(data, config, onDoneAfterTransformData);
+        };
 
-      if (config.asyncTransforms) {
-        config.transformData(stream, SVG_STORE, config, onDoneTransformData);
-      } else {
-        var data = config.transformData(stream, SVG_STORE, config);
-        data = config.afterTransform(data, config);
-        writeFiles(stream, config, data, cb.bind(null, null));
-      }
+        if (config.asyncTransforms) {
+          config.transformData(stream, svgData, config, onDoneTransformData);
+        } else {
+          var data = config.transformData(stream, svgData, config);
+          data = config.afterTransform(data, config);
+          writeFiles(stream, config, data, cb.bind(null, null));
+        }
+      });
   });
 };
