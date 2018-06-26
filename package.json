@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "gulp lint && mocha --recursive test/specs",
-    "demo": "node demo.js",
+    "demo": "gulp ensure",
     "docs": "jsdoc -c ./jsdoc-conf.json -d docs -t ./node_modules/ink-docstrap/template -R README.md -r .",
     "gulp": "gulp",
     "gulp-defs": "gulp multitool:defs",
