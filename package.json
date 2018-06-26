@@ -1,6 +1,6 @@
 {
   "name": "gulp-svg-multitool",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Various SVG manipulations using gulp",
   "main": "index.js",
   "engines": {
@@ -53,16 +53,15 @@
     "phantomjs-prebuilt": "^2.1.16",
     "send": "^0.16.2",
     "sinon": "1.17.5",
-    "svg2png": "^4.1.1",
     "vinyl-fs": "2.4.3"
   },
   "dependencies": {
     "gulp-util": "3.0.7",
     "lodash": "^4.17.10",
     "q": "1.4.1",
-    "svg-sprite-data": "3.1.0",
     "svgo": "0.6.6",
     "through2": "2.0.1",
+    "svg2png": "^4.1.1",
     "vinyl": "1.2.0"
   }
 }
