@@ -9,7 +9,7 @@
   "scripts": {
     "test": "gulp lint && mocha --recursive test/specs",
     "demo": "node demo.js",
-    "docs": "jsdoc index.js",
+    "docs": "jsdoc -c ./jsdoc-conf.json -d docs -t ./node_modules/ink-docstrap/template -R README.md -r .",
     "gulp": "gulp",
     "gulp-defs": "gulp multitool:defs",
     "gulp-symbols": "gulp multitool:symbols",
@@ -45,6 +45,7 @@
     "gulp-yuidoc": "0.1.2",
     "hoek": "^4.2.1",
     "img-compare": "1.2.0",
+    "ink-docstrap": "^1.3.2",
     "jshint": "^2.9.1",
     "marked": "^0.4.0",
     "minimatch": "^3.0.4",

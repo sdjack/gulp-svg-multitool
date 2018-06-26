@@ -1,3 +1,7 @@
+/**
+ * Unit testing spec
+ * @namespace init.spec
+ */
 var File = require("vinyl");
 var assert = require("chai").assert;
 var vfs = require("vinyl-fs");
@@ -5,7 +9,9 @@ var through = require("through2");
 var svgMultitool = require("../../index");
 
 /**
- * @module TestUtility
+ * Unit testing construct
+ * @function TestUtility
+ * @memberof init.spec
  */
 function TestUtility() {
     this.actual = {};
@@ -13,6 +19,13 @@ function TestUtility() {
     this.dest = vfs.dest;
 }
 
+/**
+ * Misc helper
+ * @function injectTestPipe
+ * @param {Function} callback - callback
+ * @return {Stream}
+ * @memberof init.spec
+ */
 TestUtility.prototype.injectTestPipe = function(callback) {
 
   const self = this;
@@ -37,9 +50,11 @@ TestUtility.prototype.injectTestPipe = function(callback) {
 };
 
 /**
+ * Misc helper
  * @function streamHelper
  * @param {Stream} stream
  * @param {Function} cb
+ * @memberof init.spec
  */
 TestUtility.prototype.streamHelper = function(config, cb) {
     const self = this;
@@ -54,6 +69,7 @@ TestUtility.prototype.streamHelper = function(config, cb) {
  * @function streamTester
  * @param {Object} config
  * @param {Function} done
+ * @memberof init.spec
  */
 TestUtility.prototype.streamTester = function(config, done, expected = []) {
     // console.log("Test Stream INITIALIZED");

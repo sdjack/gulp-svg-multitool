@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>gulp-svg-multitool Index</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">gulp-svg-multitool</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="namespaces.list.html" class="dropdown-toggle" data-toggle="dropdown">Namespaces<b class="caret"></b></a>
+				<ul class="dropdown-menu inline">
+					<li><a href="gulp-svg-multitool.html">gulp-svg-multitool</a></li><li><a href="init.spec.html">init.spec</a></li><li><a href="svg-data.html">svg-data</a></li><li><a href="svg-dispatcher.html">svg-dispatcher</a></li><li><a href="svg-object.html">svg-object</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu inline">
+					<li><a href="global.html#gulp-defs">gulp-defs</a></li><li><a href="global.html#gulp-options">gulp-options</a></li><li><a href="global.html#gulp-pngs">gulp-pngs</a></li><li><a href="global.html#gulp-symbols">gulp-symbols</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+    <section class="readme-section">
+        <article><h1>gulp-svg-multitool <a href="https://travis-ci.org/sdjack/gulp-svg-multitool"><img src="https://travis-ci.org/sdjack/gulp-svg-multitool.svg?branch=master" alt="Build Status"></a></h1><h2>Table of contents</h2><ul>
+<li><a href="#install">Install</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#png-fallback">PNG fallbacks</a></li>
+<li><a href="#symbols-mode">Symbols mode</a></li>
+<li><a href="#defs-mode">Defs mode</a><ul>
+<li><a href="#custom-filenames">Custom filenames</a></li>
+<li><a href="#base-size">Base size</a></li>
+<li><a href="#no-previews">No previews</a></li>
+</ul>
+</li>
+<li><a href="#advanced-data-transforms">Advanced: data transforms</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<h2>Install</h2><p>Install it locally to your project.</p>
+<pre class="prettyprint source lang-js"><code>$ npm install --save-dev gulp-svg-multitool</code></pre><h2>Usage</h2><p>With no configuration, <code>gulp-svg-multitool</code> will create the following files:</p>
+<ol>
+<li><code>svg/atlas.svg</code> - Sprite Sheet containing all of your SVGs</li>
+<li><code>preview.html</code>    - A preview page with instructions &amp; snippets</li>
+</ol>
+<pre class="prettyprint source lang-js"><code>var svgMultitool = require(&quot;gulp-svg-multitool&quot;);
+
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool())
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><p>Then, if you had a <code>facebook.svg</code> file, you'd be able to use the following markup in your webpage:</p>
+<pre class="prettyprint source lang-html"><code>&lt;i class=&quot;icon facebook&quot;>&lt;/i></code></pre><h2>PNG fallbacks</h2><p>You can easily generate png files from your source svgs.</p>
+<pre class="prettyprint source lang-js"><code>var svgMultitool = require(&quot;gulp-svg-multitool&quot;);
+
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({pngFallback: true}))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><h2>Symbols mode</h2><p>To get output SVG data as this <a href="http://css-tricks.com/svg-symbol-good-choice-icons/">CSS Tricks article</a> outlines.</p>
+<pre class="prettyprint source lang-js"><code>gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({symbols: true}))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><h3>Custom filenames</h3><p>You can also change the generated filenames with ease. For example, if you want to create a <code>scss</code> partial instead, you could just do:</p>
+<pre class="prettyprint source lang-js"><code>
+// Custom SVG filename
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({
+            svgOutputFile: &quot;svg.svg&quot;
+        }))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});
+
+// Custom preview filename + custom SVG filename
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({
+            svgOutputFile: &quot;svg.svg&quot;,
+            previewFile: &quot;index.html&quot;
+        }))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});
+
+// Custom JSON filename
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({
+            jsonFile: &quot;output.json&quot;
+        }))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><h3>Base size</h3><p>Set the font-size of the .icon class. Just pass a plain number, no units.</p>
+<pre class="prettyprint source lang-js"><code>gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({
+            baseSize: 16
+        }))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><h3>No previews</h3><p>If you don't want 'em. Works in all modes.</p>
+<pre class="prettyprint source lang-js"><code>gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool({
+            preview: false
+        }))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});</code></pre><h2>Advanced: data transforms</h2><p>If you want to do some custom stuff with your templates, you might need to transform the SVG data before it gets to your template. There
+are two functions you can provide to do this and they'll override the internal ones. Override <code>transformData</code> and you'll have direct access
+to the data returned from <a href="https://github.com/shakyShane/svg-sprite-data">svg-sprite-data</a>. This will skip the few transformations that
+this library applies - so use with caution. (If you want to modify the data as well after our internal modifications, use <code>afterTransform</code> instead.)</p>
+<pre class="prettyprint source lang-js"><code>
+// Synchronous
+var config = {
+    transformData: function (data, config) {
+        return data; // modify the data and return it
+    },
+    svgOutputFile: &quot;svg.svg&quot;
+};
+
+// Asynchronous
+var config = {
+    asyncTransforms: true,
+    transformData: function (data, config, done) {
+        done(data); // modify the data and pass it
+    },
+    svgOutputFile: &quot;svg.svg&quot;
+};
+
+gulp.task('multitool', function () {
+    return gulp.src('assets/svg/*.svg')
+        .pipe(svgMultitool(config))
+        .pipe(gulp.dest(&quot;assets&quot;));
+});
+</code></pre><h2>License</h2><p>Copyright (c) 2018 Steven Jackson</p>
+<p>Licensed under the MIT license.</p></article>
+    </section>
+
+
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	2018
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

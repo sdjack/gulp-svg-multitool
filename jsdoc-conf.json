@@ -1,0 +1,21 @@
+{
+    "source": {
+        "exclude": ["node_modules"],
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false,
+        "systemName": "gulp-svg-multitool",
+        "copyright":  "2018",
+        "includeDate": false,
+        "navType": "inline",
+        "theme": "simplex",
+        "linenums": true,
+        "collapseSymbols": false,
+        "inverseNav": true,
+        "outputSourceFiles": true,
+        "outputSourcePath": false,
+        "syntaxTheme": "default"
+    }
+}
