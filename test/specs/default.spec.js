@@ -13,7 +13,7 @@ describe("Sending Test Files", function () {
             svgOutputFile: "defs.svg"
         };
 
-        TestUtility.streamTester(config, done, [ "defs.svg", "preview.html" ]);
+        TestUtility.streamTester(config, done, [ "svg-data.json", "defs.svg", "preview.html" ]);
     });
 
     it("Compiling SVGs as SYMBOLS", function (done) {
@@ -25,6 +25,6 @@ describe("Sending Test Files", function () {
             svgOutputFile: "symbols.svg"
         };
 
-        TestUtility.streamTester(config, done, [ "defs.svg", "preview.html", "symbols.svg" ]);
+        TestUtility.streamTester(config, done, [ "svg-data.json", "defs.svg", "preview.html", "symbols.svg" ]);
     });
 });
