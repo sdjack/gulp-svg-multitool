@@ -1,6 +1,6 @@
 {
   "name": "gulp-svg-multitool",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "Various SVG manipulations using gulp",
   "main": "index.js",
   "engines": {
@@ -34,8 +34,9 @@
   "homepage": "https://github.com/sdjack/gulp-svg-multitool#readme",
   "devDependencies": {
     "chai": "^3.5.0",
+    "del": "^3.0.0",
     "growl": "^1.10.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-clean": "0.3.2",
     "gulp-contribs": "0.0.3",
     "gulp-filter": "4.0.0",
@@ -57,6 +58,7 @@
   },
   "dependencies": {
     "async": "^2.6.1",
+    "colors": "^1.3.0",
     "gulp-util": "3.0.7",
     "lodash": "^4.17.10",
     "q": "1.4.1",

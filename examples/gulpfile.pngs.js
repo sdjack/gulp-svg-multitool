@@ -10,17 +10,18 @@ var config = {
     pngFallback: true,
     /**
      * Change the output directory
-     * @property outputPath
+     * @property atlasPath
      * @type String
      */
-    outputPath: './icons'
+    atlasPath: './icons'
 };
 /**
  * Example Method shows how to utilize png fallbacks
  * @method gulp-pngs
  */
-gulp.task("multitool:pngs", ["clean:output"], function () {
-    gulp.src("test/fixtures/*.svg")
-        .pipe(svgMultitool(config))
-        .pipe(gulp.dest("./test/output"))
+gulp.task("multitool:pngs", function() {
+  return gulp.src("test/fixtures/*.svg")
+     .pipe(svgMultitool(config))
+     .pipe(gulp.dest("test/output"));
 });
+gulp.task("pngs", gulp.series("clean", "multitool:pngs"));

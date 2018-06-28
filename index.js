@@ -13,36 +13,38 @@ const async = require("async");
 const svg2png = require("svg2png");
 const fs = require("fs");
 const getDispatcher = require("./lib/svg-dispatcher").getDispatcher;
+const consolo = require("./lib/svg-console").getConSolo("Multitool Stream");
 const PLUGIN_NAME = "gulp-svg-multitool";
 /**
  * Default configuration. Everything here can be overridden
  * @constant {Object} options
+ * @property {Boolean} options.async - Use async processing
  * @property {Boolean} options.symbols - Use symbol blocks instead of defs
  * @property {Boolean} options.jsonData - Generate JSON data from SVG files
  * @property {Boolean} options.pngFallback - Generate PNG fallback images of each SVG
- * @property {Boolean} options.async - Use async processing
- * @property {String} options.outputPath - Define the output path for generated files.
- * @property {String} options.previewFile - Define the output path for generated files.
- * @property {String} options.jsonFile - Define the output path for generated files.
- * @property {String} options.svgOutputFile - Define the output path for generated files.
- * @property {Number} options.padding - Add padding to sprite items
- * @property {Number} options.baseSize - Set the base font-size for the icon element
+ * @property {String} options.pngPath - Define the png output file path.
+ * @property {String} options.previewFile - Define the preview output file name.
+ * @property {String} options.previewPath - Define the preview output file path.
+ * @property {String} options.jsonFile - Define the json output file name.
+ * @property {String} options.jsonPath - Define the json output file path.
+ * @property {String} options.atlasFile - Define the svg output file name.
+ * @property {String} options.atlasPath - Define the svg output file path.
  * @property {Function} options.postProcess - Apply additional data changes AFTER core processes
  * @memberof gulp-svg-multitool
  */
 const options = {
+    async: false,
     symbols: false,
     jsonData: true,
-    preview: true,
+    preview: false,
     pngFallback: false,
-    async: false,
-    common: "icon",
-    outputPath:   "./",
+    pngPath: "",
     previewFile: "preview.html",
+    previewPath: "",
     jsonFile: "svg-data.json",
-    svgOutputFile: "atlas.svg",
-    padding: 0,
-    baseSize: 10,
+    jsonPath: "",
+    atlasFile: "svg-atlas.svg",
+    atlasPath: "",
     svgoConfig: {},
     postProcess: function(data, config, done) {
         if (config.async) {
@@ -64,22 +66,34 @@ function error(context, msg) {
 }
 
 /**
- * Misc helper func
- * @function makeFile
- * @param {String} fileName
- * @param {Stream} stream
- * @param {*} data
+ * Path correction helper
+ * @function getCleanPath
+ * @param {String} pathValue
+ * @param {Stream} fileValue
+ * @return {String} Usable path
  * @memberof gulp-svg-multitool
  */
-function makeFile(fileName, stream, data) {
-  const fileBuffer = new Buffer(data);
-  const newFile = new File({
+function getCleanPath(pathValue, fileValue) {
+  let p = pathValue.replace(/\/$/, "");
+  let s = (p.length > 0) ? "/" : "";
+  return `${p}${s}${fileValue}`;
+}
+
+/**
+ * Misc helper func
+ * @function makeFile
+ * @param {String} dest
+ * @param {Stream} stream
+ * @param {*} buffer
+ * @memberof gulp-svg-multitool
+ */
+function makeFile(dest, stream, buffer) {
+  stream.push(new File({
       cwd:  "./",
       base: "./",
-      path: fileName,
-      contents: fileBuffer
-  });
-  stream.push(newFile);
+      path: dest,
+      contents: buffer
+  }));
 }
 
 /**
@@ -99,7 +113,7 @@ function writeFiles(stream, config, data, cb) {
   var template = "";
   var previewTemplate = "";
 
-  if (!config.svgOutputFile) {
+  if (!config.atlasFile) {
       cb(null);
   }
   if (config.symbols) {
@@ -109,10 +123,12 @@ function writeFiles(stream, config, data, cb) {
       template = fs.readFileSync(__dirname + "/templates/defs.svg", "utf-8");
       previewTemplate = fs.readFileSync(__dirname + "/templates/preview-template.html", "utf-8");
   }
-  makeTemplateFile(template, config.svgOutputFile, stream, data).then(function(output) {
+  const filePath = getCleanPath(config.atlasPath, config.atlasFile);
+  makeTemplateFile(template, filePath, stream, data).then(function(output) {
       data.svgInline = output;
       if (config.preview) {
-          promises.push(makeTemplateFile(previewTemplate, config.previewFile, stream, data));
+          const previewFilePath = getCleanPath(config.previewPath, config.previewFile);
+          promises.push(makeTemplateFile(previewTemplate, previewFilePath, stream, data));
           Q.all(promises).then(cb);
       } else {
         cb(null);
@@ -124,13 +140,13 @@ function writeFiles(stream, config, data, cb) {
  * Misc helper func
  * @function makeTemplateFile
  * @param {File} template
- * @param {String} fileName
+ * @param {String} filePath
  * @param {Stream} stream
  * @param {Object} data
  * @return {Promise.promise|*}
  * @memberof gulp-svg-multitool
  */
-function makeTemplateFile(template, fileName, stream, data) {
+function makeTemplateFile(template, filePath, stream, data) {
 
   var deferred = Q.defer();
   var id = _.uniqueId();
@@ -145,14 +161,8 @@ function makeTemplateFile(template, fileName, stream, data) {
   }
 
   const fileBuffer = new Buffer(out);
-  const newFile = new File({
-      cwd:  "./",
-      base: "./",
-      path: fileName,
-      contents: fileBuffer
-  });
+  makeFile(filePath, stream, fileBuffer);
 
-  stream.push(newFile);
   deferred.resolve(out);
 
   return deferred.promise;
@@ -178,9 +188,10 @@ function jsonify(stream, data, config, done) {
         return item;
     });
 
-    const jsonPath = `${config.outputPath}/${config.jsonFile}`;
+    const filePath = getCleanPath(config.jsonPath, config.jsonFile);
     const json = JSON.stringify(jsonBuildData);
-    makeFile(config.jsonFile, stream, json);
+    const fileBuffer = new Buffer(json);
+    makeFile(filePath, stream, fileBuffer);
   }
 
   if (config.async) {
@@ -190,24 +201,40 @@ function jsonify(stream, data, config, done) {
   return config.postProcess(data, config);
 }
 
+/**
+ * Path correction helper
+ * @function getCleanPath
+ * @param {String} pathValue
+ * @param {Stream} fileValue
+ * @return {String} Usable path
+ * @memberof gulp-svg-multitool
+ */
+function getCleanPath(pathValue, fileValue) {
+  let p = pathValue.replace(/\/$/, "");
+  let s = (p.length > 0) ? "/" : "";
+  return `${p}${s}${fileValue}`;
+}
+
 module.exports = function(config) {
 
     config = _.merge(_.cloneDeep(options), config || {});
 
     const dispatcher = getDispatcher(config);
 
+    consolo.log("Initialized");
+
     return through.obj(function(file, enc, cb) {
 
       var stream = this;
       var fileName = path.basename(file.path, path.extname(file.path));
+      const stage2stamp = Date.now();
+      consolo.log("File Added [" + fileName + "]");
       dispatcher.register(file);
+
       if (config.pngFallback) {
-        stream.push(new File({
-            cwd:  "./",
-            base: "./",
-            path: `${fileName}.png`,
-            contents: svg2png.sync(file.contents)
-        }));
+        const filePath = getCleanPath(config.pngPath, `${fileName}.png`);
+        const fileBuffer = svg2png.sync(file.contents);
+        makeFile(filePath, stream, fileBuffer);
       }
 
       cb(null);
@@ -215,6 +242,8 @@ module.exports = function(config) {
     }, function(cb) {
 
       var stream = this;
+      const stage3stamp = Date.now();
+      consolo.log("Work Complete");
       dispatcher.compile(function(err, svgData) {
         if (config.async) {
           var onDone = function(data) {

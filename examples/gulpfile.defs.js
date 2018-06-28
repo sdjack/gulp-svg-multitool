@@ -4,8 +4,9 @@ var svgMultitool = require("../index"); // replace with gulp-svg-multitool in yo
  * Example Method shows basic usage with no options/config
  * @method gulp-defs
  */
-gulp.task("multitool:defs", ["clean:output"], function() {
-    return gulp.src("test/fixtures/*.svg")
-        .pipe(svgMultitool())
-        .pipe(gulp.dest("./test/output"));
-  });
+gulp.task("multitool:defs", function() {
+  return gulp.src("test/fixtures/*.svg")
+     .pipe(svgMultitool())
+     .pipe(gulp.dest("test/output"));
+});
+gulp.task("defs", gulp.series("clean", "multitool:defs"));

@@ -10,23 +10,24 @@ var config = {
     symbols: true,
     /**
      * Change the output directory
-     * @property outputPath
+     * @property atlasPath
      * @type String
      */
-    outputPath: './icons',
+    atlasPath: './icons',
     /**
      * Change the svg output filename
-     * @property outputFile
+     * @property atlasFile
      * @type String
      */
-    outputFile: 'generated.svg'
+    atlasFile: 'generated.svg'
 };
 /**
  * Example Method shows how to utilize symbols mode
  * @method gulp-symbols
  */
-gulp.task("multitool:symbols", ["clean:output"], function() {
-    return gulp.src("test/fixtures/*.svg")
-        .pipe(svgMultitool(config))
-        .pipe(gulp.dest("./test/output"));
-  });
+gulp.task("multitool:symbols", function() {
+  return gulp.src("test/fixtures/*.svg")
+     .pipe(svgMultitool(config))
+     .pipe(gulp.dest("test/output"));
+});
+gulp.task("symbols", gulp.series("clean", "multitool:symbols"));

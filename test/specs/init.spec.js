@@ -52,17 +52,17 @@ TestUtility.prototype.injectTestPipe = function(callback) {
 /**
  * Misc helper
  * @function streamHelper
- * @param {Stream} stream
+ * @param {Object} config
  * @param {Function} cb
  * @memberof init.spec
  */
 TestUtility.prototype.streamHelper = function(config, cb) {
     const self = this;
     // console.log("Stream Helper INITIALIZED");
-    self.src("../fixtures/**")
+    self.src(["../fixtures/**"])
         .pipe(svgMultitool(config))
         .pipe(self.injectTestPipe(cb))
-        .pipe(self.dest(config.outputPath));
+        .pipe(self.dest("../output"));
 };
 
 /**
@@ -71,7 +71,7 @@ TestUtility.prototype.streamHelper = function(config, cb) {
  * @param {Function} done
  * @memberof init.spec
  */
-TestUtility.prototype.streamTester = function(config, done, expected = []) {
+TestUtility.prototype.streamTester = function(config, expected, done) {
     // console.log("Test Stream INITIALIZED");
     this.streamHelper(config, function (data) {
         // console.log("Test Stream callback FIRED");
@@ -82,4 +82,15 @@ TestUtility.prototype.streamTester = function(config, done, expected = []) {
 };
 
 
-module.exports.TestUtility = new TestUtility();
+/**
+ * Instance creator
+ * @function getTestUtility
+ * @return {Object} TestUtility
+ * @memberof init.spec
+ */
+function getTestUtility() {
+
+  return new TestUtility();
+}
+
+module.exports.getTestUtility = getTestUtility;
