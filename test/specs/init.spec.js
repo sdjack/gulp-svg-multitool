@@ -59,10 +59,10 @@ TestUtility.prototype.injectTestPipe = function(callback) {
 TestUtility.prototype.streamHelper = function(config, cb) {
     const self = this;
     // console.log("Stream Helper INITIALIZED");
-    self.src(["../fixtures/**"])
+    self.src(["test/fixtures/**/*"])
         .pipe(svgMultitool(config))
         .pipe(self.injectTestPipe(cb))
-        .pipe(self.dest("../output"));
+        .pipe(self.dest("test/output"));
 };
 
 /**

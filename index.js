@@ -233,7 +233,7 @@ module.exports = function(config) {
 
       if (config.pngFallback) {
         const filePath = getCleanPath(config.pngPath, `${fileName}.png`);
-        const fileBuffer = svg2png.sync(file.contents);
+        const fileBuffer = svg2png.sync(file.contents, {width: 300});
         makeFile(filePath, stream, fileBuffer);
       }
 
