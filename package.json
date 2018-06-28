@@ -56,12 +56,13 @@
     "vinyl-fs": "2.4.3"
   },
   "dependencies": {
+    "async": "^2.6.1",
     "gulp-util": "3.0.7",
     "lodash": "^4.17.10",
     "q": "1.4.1",
+    "svg2png": "^4.1.1",
     "svgo": "0.6.6",
     "through2": "2.0.1",
-    "svg2png": "^4.1.1",
     "vinyl": "1.2.0"
   }
 }
