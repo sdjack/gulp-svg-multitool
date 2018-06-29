@@ -1,20 +1,18 @@
 "use strict";
 
-const getTestUtility = require("./init.spec").getTestUtility;
+var getTestUtility = require("./init.spec").getTestUtility;
 
-describe("Sending Test Files", function () {
+describe("Sending Test Files", function() {
+  var TestUtility = getTestUtility();
 
-    const TestUtility = getTestUtility();
+  it("Compiling SVGs as DEFS", function(done) {
+    var config = {
+      symbols: false,
+      preview: true,
+      // pngFallback: true,
+      atlasFile: "defs.svg"
+    };
 
-    it("Compiling SVGs as DEFS", function (done) {
-
-        var config = {
-            symbols: false,
-            preview: true,
-            // pngFallback: true,
-            atlasFile: "defs.svg"
-        };
-
-        TestUtility.streamTester(config, [ "svg-data.json", "defs.svg", "preview.html" ], done);
-    });
+    TestUtility.streamTester(config, ["svg-data.json", "defs.svg", "preview.html"], done);
+  });
 });

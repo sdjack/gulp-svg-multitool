@@ -1,5 +1,5 @@
 var gulp = require("gulp");
-var jshint = require("gulp-jshint");
+var eslint = require("gulp-eslint");
 var contribs = require("gulp-contribs");
 var del = require("del");
 var svgMultitool = require("./index.js");
@@ -20,9 +20,8 @@ gulp.task("generate", function() {
 
 gulp.task("runtest", function() {
   return gulp.src(["test/specs/**/*.js", "index.js"])
-    .pipe(jshint("test/specs/.jshintrc"))
-    .pipe(jshint.reporter("default"))
-    .pipe(jshint.reporter("fail"));
+    .pipe(eslint("test/specs/.eslintrc"))
+    .pipe(eslint.format());
 });
 
 gulp.task("lint", gulp.series("clean", "generate", "runtest"));

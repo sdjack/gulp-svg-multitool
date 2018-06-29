@@ -14,9 +14,9 @@ var svgMultitool = require("../../index");
  * @memberof init.spec
  */
 function TestUtility() {
-    this.actual = {};
-    this.src = vfs.src;
-    this.dest = vfs.dest;
+  this.actual = {};
+  this.src = vfs.src;
+  this.dest = vfs.dest;
 }
 
 /**
@@ -27,26 +27,28 @@ function TestUtility() {
  * @memberof init.spec
  */
 TestUtility.prototype.injectTestPipe = function(callback) {
-
-  const self = this;
+  var self = this;
 
   // console.log("Testing Pipe INITIALIZED");
 
-  return through.obj(function(file, enc, cb) {
-    if (typeof file === "string") {
+  return through.obj(
+    function(file, enc, cb) {
+      if (typeof file === "string") {
         self.actual[file] = null;
-    } else {
+      } else {
         // console.log("Testing Pipe onData FIRED");
         // console.log(file);
         self.actual[file.path] = file.contents.toString();
+      }
+
+      this.push(file);
+
+      cb(null);
+    },
+    function() {
+      callback(self.actual);
     }
-
-    this.push(file);
-
-    cb(null);
-  }, function() {
-    callback(self.actual);
-  });
+  );
 };
 
 /**
@@ -57,12 +59,13 @@ TestUtility.prototype.injectTestPipe = function(callback) {
  * @memberof init.spec
  */
 TestUtility.prototype.streamHelper = function(config, cb) {
-    const self = this;
-    // console.log("Stream Helper INITIALIZED");
-    self.src(["test/fixtures/**/*"])
-        .pipe(svgMultitool(config))
-        .pipe(self.injectTestPipe(cb))
-        .pipe(self.dest("test/output"));
+  var self = this;
+  // console.log("Stream Helper INITIALIZED");
+  self
+    .src(["test/fixtures/**/*"])
+    .pipe(svgMultitool(config))
+    .pipe(self.injectTestPipe(cb))
+    .pipe(self.dest("test/output"));
 };
 
 /**
@@ -72,15 +75,14 @@ TestUtility.prototype.streamHelper = function(config, cb) {
  * @memberof init.spec
  */
 TestUtility.prototype.streamTester = function(config, expected, done) {
-    // console.log("Test Stream INITIALIZED");
-    this.streamHelper(config, function (data) {
-        // console.log("Test Stream callback FIRED");
-        assert.deepEqual(Object.keys(data), expected);
-        done();
-    });
-    // done();
+  // console.log("Test Stream INITIALIZED");
+  this.streamHelper(config, function(data) {
+    // console.log("Test Stream callback FIRED");
+    assert.deepEqual(Object.keys(data), expected);
+    done();
+  });
+  // done();
 };
-
 
 /**
  * Instance creator
@@ -89,7 +91,6 @@ TestUtility.prototype.streamTester = function(config, expected, done) {
  * @memberof init.spec
  */
 function getTestUtility() {
-
   return new TestUtility();
 }
 

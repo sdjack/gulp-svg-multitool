@@ -1,0 +1,44 @@
+{
+  "env": {
+    "node": true
+  },
+  "globals": {
+    "describe": false,
+    "it": false,
+    "expect": false,
+    "runs": false,
+    "waitsFor": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "before": false,
+    "after": false
+  },
+  "rules": {
+    "curly": 2,
+    "eqeqeq": 2,
+    "wrap-iife": [
+      2,
+      "any"
+    ],
+    "no-use-before-define": [
+      2,
+      {
+        "functions": false
+      }
+    ],
+    "new-cap": 2,
+    "no-caller": 2,
+    "dot-notation": 0,
+    "no-undef": 0,
+    "no-unused-vars": 0,
+    "quotes": [
+      2,
+      "double"
+    ],
+    "no-cond-assign": [
+      2,
+      "except-parens"
+    ],
+    "no-eq-null": 2
+  }
+}
