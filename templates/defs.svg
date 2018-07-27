@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="0" height="0" style="position:absolute">
   <defs><% _.forEach(svg, function(svgItem) { %>
-  		<svg id="<%= svgItem.name %>" viewBox="<%= svgItem.viewBox %>">
+  		<svg id="<%= svgItem.name %>" viewBox="<%= svgItem.viewBox %>" preserveAspectRatio="<%= svgItem.preserveAspectRatio %>" width="100%" height="100%" fill="<%= svgItem.fill %>">
   			<%= svgItem.svg.replace(/<svg.*?>(.*?)<\/svg>/, "$1") %>
   		</svg>
   	<% }); %></defs>

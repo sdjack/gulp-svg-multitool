@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="<%= name %>" viewBox="<%= viewBox %>" preserveAspectRatio="xMidYMid meet" fill="#ffffff" width="100%" height="100%">
+	<%= svg.replace(/<svg.*?>(.*?)<\/svg>/, "$1") %>
+</svg>

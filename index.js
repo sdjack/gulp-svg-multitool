@@ -3,18 +3,18 @@
  * {@link https://github.com/shakyshane/gulp-svg-sprites#readme|gulp-svg-sprites}
  * @namespace gulp-svg-multitool
  */
-const through = require("through2");
-const gutil = require("gulp-util");
-const File = gutil.File;
-const Q = require("q");
-const _ = require("lodash");
-const path = require("path");
-const async = require("async");
-const svg2png = require("svg2png");
-const fs = require("fs");
-const getDispatcher = require("./lib/svg-dispatcher").getDispatcher;
-const consolo = require("./lib/svg-console").getConSolo("Multitool Stream");
-const PLUGIN_NAME = "gulp-svg-multitool";
+var through = require("through2");
+var gutil = require("gulp-util");
+var File = gutil.File;
+var Q = require("q");
+var _ = require("lodash");
+var path = require("path");
+var async = require("async");
+var svg2png = require("svg2png");
+var fs = require("fs");
+var getDispatcher = require("./lib/svg-dispatcher").getDispatcher;
+var consolo = require("./lib/svg-console").getConSolo("Multitool Stream");
+var PLUGIN_NAME = "gulp-svg-multitool";
 /**
  * Default configuration. Everything here can be overridden
  * @constant {Object} options
@@ -32,26 +32,29 @@ const PLUGIN_NAME = "gulp-svg-multitool";
  * @property {Function} options.postProcess - Apply additional data changes AFTER core processes
  * @memberof gulp-svg-multitool
  */
-const options = {
-    async: false,
-    symbols: false,
-    jsonData: true,
-    preview: false,
-    pngFallback: false,
-    pngPath: "",
-    previewFile: "preview.html",
-    previewPath: "",
-    jsonFile: "svg-data.json",
-    jsonPath: "",
-    atlasFile: "svg-atlas.svg",
-    atlasPath: "",
-    svgoConfig: {},
-    postProcess: function(data, config, done) {
-        if (config.async) {
-           return done(data);
-        }
-        return data;
+var options = {
+  async: false,
+  symbols: false,
+  optimized: false,
+  optimizedPath: "dist",
+  pngFallback: false,
+  pngPath: "",
+  preview: false,
+  previewFile: "preview.html",
+  previewPath: "",
+  jsonData: false,
+  jsonFile: "svg-data.json",
+  jsonPath: "",
+  atlasData: true,
+  atlasFile: "svg-atlas.svg",
+  atlasPath: "",
+  svgoConfig: {},
+  postProcess: function(data, config, done) {
+    if (config.async) {
+      return done(data);
     }
+    return data;
+  }
 };
 
 /**
@@ -74,8 +77,8 @@ function error(context, msg) {
  * @memberof gulp-svg-multitool
  */
 function getCleanPath(pathValue, fileValue) {
-  let p = pathValue.replace(/\/$/, "");
-  let s = (p.length > 0) ? "/" : "";
+  var p = pathValue.replace(/\/$/, "");
+  var s = p.length > 0 ? "/" : "";
   return `${p}${s}${fileValue}`;
 }
 
@@ -88,52 +91,14 @@ function getCleanPath(pathValue, fileValue) {
  * @memberof gulp-svg-multitool
  */
 function makeFile(dest, stream, buffer) {
-  stream.push(new File({
-      cwd:  "./",
+  stream.push(
+    new File({
+      cwd: "./",
       base: "./",
       path: dest,
       contents: buffer
-  }));
-}
-
-/**
- * Misc helper func
- * @function writeFiles
- * @param {Stream} stream
- * @param {Object} config
- * @param {Object} data
- * @param {Function} cb
- * @memberof gulp-svg-multitool
- */
-function writeFiles(stream, config, data, cb) {
-
-  data.config = config;
-
-  var promises = [];
-  var template = "";
-  var previewTemplate = "";
-
-  if (!config.atlasFile) {
-      cb(null);
-  }
-  if (config.symbols) {
-      template = fs.readFileSync(__dirname + "/templates/symbols.svg", "utf-8");
-      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-symbols.html", "utf-8");
-  } else {
-      template = fs.readFileSync(__dirname + "/templates/defs.svg", "utf-8");
-      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-template.html", "utf-8");
-  }
-  const filePath = getCleanPath(config.atlasPath, config.atlasFile);
-  makeTemplateFile(template, filePath, stream, data).then(function(output) {
-      data.svgInline = output;
-      if (config.preview) {
-          const previewFilePath = getCleanPath(config.previewPath, config.previewFile);
-          promises.push(makeTemplateFile(previewTemplate, previewFilePath, stream, data));
-          Q.all(promises).then(cb);
-      } else {
-        cb(null);
-      }
-  });
+    })
+  );
 }
 
 /**
@@ -147,7 +112,6 @@ function writeFiles(stream, config, data, cb) {
  * @memberof gulp-svg-multitool
  */
 function makeTemplateFile(template, filePath, stream, data) {
-
   var deferred = Q.defer();
   var id = _.uniqueId();
   var out = "";
@@ -155,12 +119,14 @@ function makeTemplateFile(template, filePath, stream, data) {
   try {
     var compiled = _.template(template);
     out = compiled(data);
-  }catch (e) {
+  } catch (e) {
     deferred.reject(e);
+    // consolo.log(e);
+    consolo.log(data);
     return deferred.promise;
   }
 
-  const fileBuffer = new Buffer(out);
+  var fileBuffer = new Buffer(out);
   makeFile(filePath, stream, fileBuffer);
 
   deferred.resolve(out);
@@ -169,36 +135,108 @@ function makeTemplateFile(template, filePath, stream, data) {
 }
 
 /**
- * Handles json file creation primarily
- * @function jsonify
- * @param data
- * @param config
+ * Misc helper func
+ * @function writeAtlasFiles
+ * @param {Stream} stream
+ * @param {Object} data
+ * @param {Object} config
+ * @param {Function} cb
+ * @memberof gulp-svg-multitool
+ */
+function writeAtlasFiles(stream, data, config, cb) {
+  data.config = config;
+
+  if (!config.atlasData || !config.atlasFile) {
+    cb(null);
+  } else {
+    var promises = [];
+    var template = "";
+    var previewTemplate = "";
+
+    if (config.symbols) {
+      template = fs.readFileSync(__dirname + "/templates/symbols.svg", "utf-8");
+      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-symbols.html", "utf-8");
+    } else {
+      template = fs.readFileSync(__dirname + "/templates/defs.svg", "utf-8");
+      previewTemplate = fs.readFileSync(__dirname + "/templates/preview-template.html", "utf-8");
+    }
+
+    var filePath = getCleanPath(config.atlasPath, config.atlasFile);
+
+    makeTemplateFile(template, filePath, stream, data).then(function(output) {
+      data.svgInline = output;
+      if (config.preview) {
+        var previewFilePath = getCleanPath(config.previewPath, config.previewFile);
+        promises.push(makeTemplateFile(previewTemplate, previewFilePath, stream, data));
+        Q.all(promises).then(cb);
+      } else {
+        cb(null);
+      }
+    });
+  }
+}
+
+/**
+ * Misc helper func
+ * @function writeOptimizedFiles
+ * @param {Stream} stream
+ * @param {Object} data
+ * @param {Object} config
+ * @param {Function} cb
  * @return {Object}
  * @memberof gulp-svg-multitool
  */
-function jsonify(stream, data, config, done) {
+function writeOptimizedFiles(stream, data, config, cb) {
+  if (config.optimized) {
+    data.svg = data.svg.map(function(item) {
+      if (item && item.name) {
+        var filePath = getCleanPath(config.optimizedPath, `${item.name}.svg`);
+        var template = fs.readFileSync(__dirname + "/templates/optimized.svg", "utf-8");
+        makeTemplateFile(template, filePath, stream, item);
+      }
+      return item;
+    });
+  }
 
+  if (cb) {
+    return cb(data);
+  }
+
+  return data;
+}
+
+/**
+ * Handles json file creation primarily
+ * @function writeJsonFile
+ * @param {Stream} stream
+ * @param {Object} data
+ * @param {Object} config
+ * @param {Function} cb
+ * @return {Object}
+ * @memberof gulp-svg-multitool
+ */
+function writeJsonFile(stream, data, config, cb) {
   if (config.jsonData) {
-    const jsonBuildData = {};
+    var jsonBuildData = {};
 
     data.svg = data.svg.map(function(item) {
-        if (config.jsonData) {
-          jsonBuildData[item.name] = item.data;
-        }
-        return item;
+      if (config.jsonData && item && item.name) {
+        jsonBuildData[item.name] = item.data;
+      }
+      return item;
     });
 
-    const filePath = getCleanPath(config.jsonPath, config.jsonFile);
-    const json = JSON.stringify(jsonBuildData);
-    const fileBuffer = new Buffer(json);
+    var filePath = getCleanPath(config.jsonPath, config.jsonFile);
+    var json = JSON.stringify(jsonBuildData);
+    var fileBuffer = new Buffer(json);
     makeFile(filePath, stream, fileBuffer);
   }
 
-  if (config.async) {
-    return config.postProcess(data, config, done);
+  if (cb) {
+    return cb(data);
   }
 
-  return config.postProcess(data, config);
+  return data;
 }
 
 /**
@@ -210,50 +248,45 @@ function jsonify(stream, data, config, done) {
  * @memberof gulp-svg-multitool
  */
 function getCleanPath(pathValue, fileValue) {
-  let p = pathValue.replace(/\/$/, "");
-  let s = (p.length > 0) ? "/" : "";
+  var p = pathValue.replace(/\/$/, "");
+  var s = p.length > 0 ? "/" : "";
   return `${p}${s}${fileValue}`;
 }
 
 module.exports = function(config) {
+  config = _.merge(_.cloneDeep(options), config || {});
 
-    config = _.merge(_.cloneDeep(options), config || {});
+  var dispatcher = getDispatcher(config);
+  consolo.log("Working...");
 
-    const dispatcher = getDispatcher(config);
-
-    consolo.log("Initialized");
-
-    return through.obj(function(file, enc, cb) {
-
+  return through.obj(
+    function(file, enc, cb) {
       var stream = this;
       var fileName = path.basename(file.path, path.extname(file.path));
-      const stage2stamp = Date.now();
-      consolo.log("File Added [" + fileName + "]");
+      var stage2stamp = Date.now();
       dispatcher.register(file);
 
       if (config.pngFallback) {
-        const filePath = getCleanPath(config.pngPath, `${fileName}.png`);
-        const fileBuffer = svg2png.sync(file.contents, {width: 300});
+        var filePath = getCleanPath(config.pngPath, `${fileName}.png`);
+        var fileBuffer = svg2png.sync(file.contents, { width: 300 });
         makeFile(filePath, stream, fileBuffer);
       }
 
       cb(null);
-
-    }, function(cb) {
-
+    },
+    function(cb) {
       var stream = this;
-      const stage3stamp = Date.now();
-      consolo.log("Work Complete");
+      var stage3stamp = Date.now();
       dispatcher.compile(function(err, svgData) {
-        if (config.async) {
-          var onDone = function(data) {
-            writeFiles(stream, config, data, cb.bind(null, null));
-          };
-          jsonify(stream, svgData, config, onDone);
-        } else {
-          var data = jsonify(stream, svgData, config);
-          writeFiles(stream, config, data, cb.bind(null, null));
-        }
+        var tertiary = function(data) {
+          writeAtlasFiles(stream, data, config, cb.bind(null, null));
+          consolo.log("Work Complete");
+        };
+        var secondary = function(data) {
+          writeOptimizedFiles(stream, data, config, tertiary);
+        };
+        writeJsonFile(stream, svgData, config, secondary);
       });
-  });
+    }
+  );
 };
