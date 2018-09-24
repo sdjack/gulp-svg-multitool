@@ -9,7 +9,7 @@ describe("Sending Test Files", function() {
     var config = {
       symbols: false,
       preview: true,
-      // pngFallback: true,
+      jsonData: true,
       atlasFile: "defs.svg"
     };
 
